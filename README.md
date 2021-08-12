@@ -12,3 +12,6 @@
 
 4. Activate the pipenv shell: pipenv shell
 5. To stop/exit the pipenv shell type: exit
+
+You made it down here?
+Cheers!
