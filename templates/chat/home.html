@@ -1,0 +1,48 @@
+{% extends 'chat/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6" style="margin-top: 2.5rem;">
+            <h1 style="color: gray;">A bunch of users...</h1>
+            {% if request.user.is_authenticated %}
+                <div class="user-container">
+                    <ol style="list-style-image: url({% static 'chat/images/pointer.png' %});">
+                        {% for user in all_users %}
+                            {% if request.user.name == user.name %}
+                                <li>You</li>
+                            {% else %}
+                                <li><a href="{% url 'chat:room' user.public_id %}">{{ user.name }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                </div>
+
+                <a href="{% url 'users:logout' %}">Logout</a>
+                <a href="#">Profile</a>
+            {% else %}
+                <a href="{% url 'users:login' %}">Login</a>
+                <a href="{% url 'users:register' %}">Register</a>
+            {% endif %}
+        </div>
+        <div class="col-md-6" style="margin-top: 2.5rem;">
+            <h1 style="color: gray;">Groups you are a member of...</h1>
+            {% if request.user.is_authenticated %}
+                <div class="user-container">
+                    <ol style="list-style-image: url({% static 'chat/images/pointer.png' %})">
+                        {% if groups_participated %}
+                            {% for group in groups_participated %}
+                                <li><a href="{% url 'public-chat' group.id %}">{{ group.room_name }}</a></li>
+                            {% endfor %}
+                        {% else %}
+                            <h5>You are not a member of any group so far.</h5>
+                        {% endif %}
+                    </ol>
+                </div>
+            {% else %}
+                <a href="{% url 'users:login' %}">Login</a>
+                <a href="{% url 'users:register' %}">Register</a>|
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

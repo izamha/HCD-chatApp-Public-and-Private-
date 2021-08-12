@@ -1,0 +1,76 @@
+{% load static %}
+
+{% if contacts or groups %}
+    {% for contact in contacts %}
+        <ui class="contacts">
+            {% if contact != request.user %}
+                <li class="{% if contact.name == current_user.name %} active {% endif %}"
+                    onclick="redirect('{{ contact.get_absolute_url }}'); getUserName('{{ contact.name }}')">
+                    <div class="d-flex bd-highlight">
+                        <div class="img_cont">
+                            <img src="{{ contact.profile.imageURL }}"
+                                 class="rounded-circle user_img"
+                                 alt="Profile Image">
+                            <span class="online-icon"></span>
+                        </div>
+                        <div class="user-info left-side-bar">
+                            <span>{{ contact.name|truncatechars:11 }}</span>
+                            <!-- TODO: Detect when a user is typing...whew! -->
+                            <!-- <p style="color: #4cd137;">typing...</p>-->
+                            {% for user_message in contact.message_set.all %}
+                                {% if forloop.last %}
+                                    <p>{{ user_message.text|truncatechars:27 }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </li>
+            {% endif %}
+        </ui>
+    {% endfor %}
+
+    {% for group in groups %}
+        <ui class="groups">
+            <li class="{% if group == chat_group %}active{% endif %}"
+                onclick="redirect('{{ group.get_absolute_url }}')">
+                <div class="d-flex bd-highlight">
+                    <div class="img_cont">
+                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                             class="rounded-circle user_img"
+                             alt="Profile Image">
+                        <span class="online-icon"></span>
+                    </div>
+                    <div class="user-info">
+                        <span>{{ group.room_name|truncatechars:11 }}</span>
+                        <!-- TODO: Detect when a user is typing...whew! -->
+                        <!-- <p style="color: #4cd137;">typing...</p> -->
+                    </div>
+                </div>
+            </li>
+        </ui>
+    {% endfor %}
+
+{% elif groups %}
+    {% for group in groups %}
+        <ui class="groups">
+            <li class="{% if group == chat_group %}active{% endif %}"
+                onclick="redirect('{{ group.get_absolute_url }}')">
+                <div class="d-flex bd-highlight">
+                    <div class="img_cont">
+                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                             class="rounded-circle user_img"
+                             alt="Profile Image">
+                        <span class="online-icon"></span>
+                    </div>
+                    <div class="user-info">
+                        <span>{{ group.room_name|truncatechars:11 }}</span>
+                        <!-- TODO: Detect when a user is typing...whew! -->
+                        <!-- <p style="color: #4cd137;">typing...</p> -->
+                    </div>
+                </div>
+            </li>
+        </ui>
+    {% endfor %}
+{% else %}
+    <p id="no-result" style="text-align: center;">Nothing found.</p>
+{% endif %}

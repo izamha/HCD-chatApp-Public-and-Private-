@@ -1,0 +1,363 @@
+{% extends 'chat/base.html' %}
+{% load chat_extra %}
+{% load static %}
+{% load tz %}
+
+{% block content %}
+    <div class="row justify-content-center" style="margin-top: 1.8rem;">
+        {#        <div class="welcome-message">#}
+        {#            <h3><b><span class="fa fa-comment-dots"></span><span class="fa fa-comment-dots"></span></b></h3>#}
+        {#        </div>#}
+        <div class="col-md-4 col-xl-3 chat">
+            <div class="card mb-sm-3 mb-md-0 contacts_card">
+                <div class="card-header">
+                    <div class="input-group">
+                        <label for="searchbar"></label>
+                        <input type="text" placeholder="Search contacts..." id="searchbar" name="" class="search">
+                        <div class="input-group-append">
+                            <span class="input-group-text search_btn"><i class="fa fa-search"
+                                                                         id="search-icon"></i></span>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 0.5rem;">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="forContacts" id="radioContacts"
+                                   value="contacts" checked>
+                            <label class="form-check-label" for="radioContacts"><b>Contacts</b></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="forContacts" id="radioGroups"
+                                   value="groups">
+                            <label class="form-check-label" for="radioGroups"><b>Groups</b></label>
+                        </div>
+
+                        <!-- Add group modal -->
+                        <div class="modal fade" id="groupModalDisable" tabindex="-1" role="dialog"
+                             aria-labelledby="groupModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="groupModalLabel">Add a Group</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close">
+                                        </button>
+                                    </div>
+                                    <form method="post" class="form" role="form">
+                                        <div class="modal-body">
+                                            {% csrf_token %}
+                                            {{ form }}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">Add</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End of Modal -->
+
+                        {#                        <span class="fas fa-users"#}
+                        {#                                          data-placement="top" title="Add a group"#}
+                        {#                                          data-bs-toggle="modal"#}
+                        {#                                          data-bs-target="#groupModal"></span>#}
+                        <a href="{% url 'public-chat-create' %}" class="fa fa-users"></a>
+                        <a href="{% url 'users:register' %}" class="fa fa-user-plus"></a>
+                    </div>
+                </div>
+
+                <div class="card-body contacts_body">
+                    <ui class="contacts normal-contacts">
+                        {% for user in users %}
+                            {% if user != request.user %}
+                                <li class="{% if user.name == current_user.name %} active {% endif %}"
+                                    onclick="redirect('{{ user.get_absolute_url }}'); getUserName('{{ user.name }}')">
+                                    <div class="d-flex bd-highlight">
+                                        <div class="img_cont">
+                                            <img src="{{ user.profile.imageURL }}"
+                                                 class="rounded-circle user_img"
+                                                 alt="Profile Image">
+                                            <span class="online-icon"></span>
+                                        </div>
+                                        <div class="user-info left-side-bar">
+                                            <span>{{ user.name|truncatechars:11 }}</span>
+                                            <!-- TODO: Detect when a user is typing...whew! -->
+                                            <!-- <p style="color: #4cd137;">typing...</p>-->
+                                            {% for user_message in user.message_set.all %}
+                                                {% if forloop.last %}
+                                                    <p>{{ user_message.text|truncatechars:27 }}</p>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ui>
+                    <ui class="groups normal-groups">
+                        {% for group in groups_participated %}
+                            <li class="{% if group == chat_group %}active{% endif %}"
+                                onclick="redirect('{{ group.get_absolute_url }}')">
+                                <div class="d-flex bd-highlight">
+                                    <div class="img_cont">
+                                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                             class="rounded-circle user_img"
+                                             alt="Profile Image">
+                                        <span class="online-icon"></span>
+                                    </div>
+                                    <div class="user-info">
+                                        <span>{{ group.room_name|truncatechars:11 }}</span>
+                                        <!-- TODO: Detect when a user is typing...whew! -->
+                                        <!-- <p style="color: #4cd137;">typing...</p> -->
+                                        {% for group_message in group.groupchatmessage_set.all %}
+                                            {% if forloop.last %}
+                                                <p></p>
+                                                <p>
+                                                    <em>{{ group_message.user.name }}</em>: {{ group_message.text|truncatechars:23 }}
+                                                </p>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ui>
+                    <div id="search-results">
+                        {% include 'chat/search-results.html' %}
+                    </div>
+                </div>
+                <div class="card-footer"></div>
+            </div>
+        </div>
+        <div class="col-md-8 col-xl-6 chat">
+            <div class="card">
+                <div class="card-header msg_head">
+                    <div class="d-flex bd-highlight">
+                        <div class="img_cont">
+                            {% if current_user %}
+                                <img src="{{ current_user.profile.imageURL }}"
+                                     class="rounded-circle user_img"
+                                     alt="Profile Image">
+                                <span class="online-icon"></span>
+                            {% else %}
+                                <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                     class="rounded-circle user_img"
+                                     alt="Profile Image">
+                                <span class="online-icon"></span>
+                            {% endif %}
+                        </div>
+                        <div class="user-info">
+                            <span><b>{{ chat_group|truncatechars:40 }}{{ current_user.name|truncatechars:40 }}</b></span>
+                            <p>{{ members }}</p>
+                        </div>
+{#                        <div class="video-cam">#}
+{#                            <span><i class="fa fa-cloud-sun" data-toggle="tooltip" data-placement="top"#}
+{#                                     title="Day and Night"></i></span>#}
+{#                        </div>#}
+                    </div>
+                    <span id="action_menu_btn"><i class="fa fa-ellipsis-v" data-toggle="tooltip" data-placement="top"
+                                                  title="More..."></i></span>
+                    <div class="action_menu">
+                        <ul>
+                            <li><i class="fa fa-user-circle"></i>View profile</li>
+                            <li><i class="fa fa-users"></i> Add to Close Friends</li>
+                            <li><i class="fa fa-plus"></i> Add to group</li>
+                            <li><i class="fa fa-ban"></i> Block</li>
+                            <hr>
+                            <li><i class="fa fa-sign-out-alt"></i><a href="{% url 'users:logout' %}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body msg-card-body">
+                    {% for message in messages %}
+                        {% if message.sender.name == me %}
+                            <div class="d-flex justify-content-end mb-4">
+                                <div class="msg-container-send">
+                                    {{ message.text }}
+                                    <span class="msg-time-sent">{{ message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
+                                </div>
+                                <div class="img_cont_msg">
+                                    <img src="{% static 'chat/images/ubuntu.jpg' %}" class="rounded-circle user_img_msg"
+                                         alt="Profile Image">
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-start mb-4">
+                                <div class="img_cont_msg">
+                                    <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                         class="rounded-circle user_img_msg"
+                                         alt="Profile Image">
+                                </div>
+                                <div class="msg-container">
+                                    {{ message.text }}
+                                    <span class="msg-time">{{ message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- For the group chat -->
+                    {% for group_message in group_messages %}
+                        {% if group_message.user.name == request.user.name %}
+                            <div class="d-flex justify-content-end mb-4">
+                                <div class="msg-container-send">
+                                    {{ group_message.text }}
+                                    <span class="msg-time-sent">{{ group_message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
+                                </div>
+                                <div class="img_cont_msg">
+                                    <img src="{{ group_message.user.profile.imageURL }}" class="rounded-circle user_img_msg"
+                                         alt="Profile Image">
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-start mb-4">
+                                <div class="img_cont_msg">
+                                    <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                         class="rounded-circle user_img_msg"
+                                         alt="Profile Image">
+                                </div>
+                                <div class="msg-container">
+                                    <small class="text-muted"
+                                           style="font-size: 11px;">{{ group_message.user.name }}</small>
+                                    <p class="small">{{ group_message.text }}</p>
+                                    <span class="msg-time">{{ group_message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <form class="form-inline" id="message-form">
+                        <div class="input-group-append">
+                                <span class="input-group-text attach-btn-paperclip"><i
+                                        class="fa fa-paperclip"></i></span>
+                        </div>
+                        {% csrf_token %}
+                        <label for="message"></label>
+                        <input class="input-msg-box" type="text" name="message" id="message"
+                               placeholder="Say something..." required>
+                        <button class="input-msg-send" type="submit" value="Send"><span
+                                class="fas fa-paper-plane"></span></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block custom_js %}
+    <script>
+        const roomId = "{{ chat_group.id }}"
+        const user = "{{ request.user.name }}"
+
+        document.querySelector('#message').focus();
+        $('#sendBtn').mousedown(function (editor) {
+
+            $('#sendBtn').click();
+            // clear textArea after mousedown on #sendBtn
+            $('#chatTextarea').data("emojioneArea").setText('');
+
+            // keep focus on editor after mousedown on #sendBtn
+            // https://cdn.jsdelivr.net/npm/emojione@3.1.2/lib/js/emojione.min.js
+            setTimeout(function () {
+                $("#emojioneArea").data("emojioneArea").editor.focus();
+            }, 1)
+        });
+        // Scroll to Bottom
+        scrollToBottom()
+        const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        const url = ws_scheme + '://' + window.location.host + window.location.pathname;
+        const ws = new WebSocket(url);
+
+        // Open connection
+        ws.onopen = function () {
+            console.log('Connection opened!');
+            console.log(user);
+            console.log(url);
+        }
+
+        // Send a message
+        ws.onmessage = function (event) {
+            console.log('Message received!');
+            console.log(event);
+            const ul = document.querySelector('.message-list');
+            let li = document.createElement('li');
+            let dt = JSON.parse(event.data);
+            // li.append(document.createTextNode('[' + dt.username + ']: ' + dt.text))
+            // ul.append(li);
+
+            $(document).ready(function () {
+                if (dt.username === user) {
+                    $('.msg-card-body').append("<div class='d-flex justify-content-end mb-4'><div class='msg-container-send'>" + dt.text + "<span class='msg-time-sent'>" + getTime() + "</span></div><div class='img_cont_msg'></div></div>");
+                } else {
+                    $('.msg-card-body').append("<div class='d-flex justify-content-start mb-4'><div class='img_cont_msg'></div><div class='msg-container'>" + dt.text + "<span class='msg-time'>" + getTime() + "</span></div></div>");
+                }
+                // Scroll to bottom
+                scrollToBottom()
+            })
+        }
+
+        ws.onclose = function (event) {
+            console.log('Connection closed!');
+            console.log(event);
+        }
+
+        ws.onerror = function (event) {
+            console.log(event);
+            console.error('Error occurred.');
+        }
+
+        // Form submission
+        const messageForm = document.getElementById('message-form');
+        messageForm.addEventListener('submit', sendMessage)
+
+        function sendMessage(e) {
+            if (e.preventDefault()) e.preventDefault();
+            ws.send(document.getElementById('message').value);
+            messageForm.reset();
+            $(".emojionearea-editor").html('');
+            return false;
+        }
+
+        function redirect(url) {
+            window.location = url;
+        }
+
+        function getUserName(name) {
+            return name;
+        }
+
+        function scrollToBottom() {
+            let msgBox = document.querySelector('.msg-card-body');
+            msgBox.scrollTop = msgBox.scrollHeight
+        }
+
+        // create message time
+        function getTime(msg_time) {
+            let today;
+            let temp;
+            if (msg_time) {
+                // define as Date so we can convert to acceptable date time format (without letter T, ex. 2020-10-10T06:50:14.751 )
+                temp = new Date(msg_time);
+
+                // suffix UTC so it will render as local time when it use toLocalString
+                today = new Date(`${temp.toLocaleString()} UTC`);
+            } else {
+                today = new Date();
+            }
+
+            // format & render to local time
+            return today.toLocaleString([], {hour: '2-digit', minute: '2-digit'})
+
+        }
+
+        //Emoji dependency
+        $(document).ready(function () {
+            $("#message").emojioneArea({
+                inline: true,
+                useInternalCDN: true
+            });
+        })
+
+    </script>
+{% endblock %}
