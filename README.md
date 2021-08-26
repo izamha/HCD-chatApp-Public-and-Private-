@@ -1,4 +1,4 @@
-# HCD-chatApp-Public-and-Private
+# HCD-chatApp
 
 ## Steps to install/run the chatApp
 
