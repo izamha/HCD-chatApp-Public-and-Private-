@@ -1,14 +1,25 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
-from django.urls import reverse
-from django.views.generic import ListView, CreateView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView
 from django.views.generic.edit import FormMixin
+from django.shortcuts import get_object_or_404
+# API
+from rest_framework import generics, views
+from rest_framework.response import Response
 
+from users.models import ActiveUser
 from .forms import GroupChatForm
 from .models import Message, CustomUser, Thread, GroupChat, GroupChatMessage
+from .serializers import (GroupSerializer,
+                          GroupCreateSerializer,
+                          GroupDetailSerializer,
+                          MessageSerializer, )
+from rest_framework import status
 
 
 @login_required
@@ -18,15 +29,16 @@ def home(request):
     unseen_message = instance.count_unseen_messages(request.user)
     all_users = sorted(CustomUser.objects.all(), key=lambda inst: inst.date_joined)[::-1]
     groups_participated = GroupChat.objects.filter(users__in=[request.user.pk])
-    print(groups_participated)
+    active_users = ActiveUser.objects.all()
     context = {
         'title': 'Home',
         'last_message': last_message,
-        'all_users': all_users,
+        'users': all_users,
         'groups_participated': groups_participated,
         'unseen_message': unseen_message,
+        'active_users': active_users,
     }
-    return render(request, 'chat/home.html', context)
+    return render(request, 'chat/room_all.html', context)
 
 
 def get_members(group_id=None, group_obj=None, user=None):
@@ -40,8 +52,9 @@ def get_members(group_id=None, group_obj=None, user=None):
     temp_members = []
     for member in chat_group.users.values_list('name', flat=True):
         if member != user:
-            temp_members.append(member.title())
-    temp_members.append('You')
+            temp_members.append(member)
+        else:
+            temp_members.append('You')
     return ', '.join(temp_members)
 
 
@@ -50,29 +63,21 @@ def room(request, group_id):
     all_groups = GroupChat.objects.all()
     for group in all_groups:
         if request.user in group.users.all():
-            try:
-                chat_group = GroupChat.objects.get(id=group_id)
-                # TODO: Make sure a user is assigned to an existing group
-                assigned_groups = list(chat_group.users.values_list('id', flat=True))
-                groups_participated = GroupChat.objects.filter(users__in=[request.user.pk])
-                group_messages = GroupChatMessage.objects.filter(room_name__in=[group_id])
-                for g in groups_participated:
-                    if request.user in g.users.all():
-                        context = {
-                            'chat_group': chat_group,
-                            'members': get_members(group_obj=chat_group, user=request.user.username),
-                            'all_group_members': GroupChat.objects.get(pk=group_id).users.all().count(),
-                            'groups_participated': groups_participated,
-                            'users': CustomUser.objects.all(),
-                            'group_messages': group_messages
-                        }
-                        return render(request, 'chat/room_all.html', context)
-                    else:
-                        return render(request, 'chat/unauthorized.html')
-            except:
-                return render(request, 'chat/unauthorized.html')
-        else:
-            return HttpResponseRedirect(reverse("chat:unauthorized"))
+            chat_group = GroupChat.objects.get(id=group_id)
+            groups = GroupChat.objects.filter(users__in=[request.user.pk])
+            group_messages = GroupChatMessage.objects.filter(room_name__in=[group_id])
+            active_users = ActiveUser().current_active_users2()
+            context = {
+                'chat_group': chat_group,
+                'groups': groups,
+                'group_messages': group_messages,
+                'active_users': active_users,
+                'users': CustomUser.objects.all(),
+                'members': get_members(group_obj=chat_group, user=request.user.name),
+            }
+            return render(request, 'chat/room_all.html', context)
+        # else:
+        #     return HttpResponseRedirect(reverse("chat:unauthorized"))
 
 
 def unauthorized(request):
@@ -98,7 +103,7 @@ def search(request):
         contacts = CustomUser.objects.filter(name__icontains=url_parameter)
         groups = GroupChat.objects.filter(users__in=[request.user.pk], room_name__icontains=url_parameter)
     else:
-        contacts = CustomUser.objects.all()
+        contacts = CustomUser.objects.all().exclude(pk=request.user.pk)
         groups = GroupChat.objects.filter(users__in=[request.user.pk])
     context = {'contacts': contacts, 'groups': groups}
     if request.is_ajax():
@@ -139,6 +144,7 @@ class ChatListView(FormMixin, ListView):
         current_user = CustomUser.objects.get(public_id=user_pub_id)
         groups_participated = GroupChat.objects.filter(users__in=[self.request.user.pk])
         users = CustomUser.objects.all()
+        active_user = ActiveUser().current_active_users(user_pub_id)
         for g in groups_participated:
             if self.request.user in g.users.all():
                 context = {
@@ -149,6 +155,7 @@ class ChatListView(FormMixin, ListView):
                     'other_user': self.other_user,
                     'groups_participated': groups_participated,
                     'current_user': current_user,
+                    'active_user': active_user
                 }
                 return context
             else:
@@ -158,8 +165,19 @@ class ChatListView(FormMixin, ListView):
                     'users': CustomUser.objects.all(),
                     'thread': self.get_object(),
                     'other_user': self.other_user,
+                    'active_user': active_user
                 }
                 return context
+        context = {
+            'me': self.request.user.name,
+            'messages': self.get_object().message_set.all(),
+            'users': CustomUser.objects.all(),
+            'thread': self.get_object(),
+            'other_user': self.other_user,
+            'current_user': current_user,
+            'active_user': active_user
+        }
+        return context
 
     def post(self, request, **kwargs):
         self.object = self.get_object()
@@ -179,5 +197,112 @@ class GroupChatCreate(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(GroupChatCreate, self).get_context_data(**kwargs)
-        context['form'] = GroupChatForm()
+        context['form'] = GroupChatForm(request=self.request)
         return context
+
+    def form_valid(self, form):
+        user = CustomUser.objects.get(pk=self.request.user.id)
+        group_name = form.cleaned_data.get('room_name')
+        instance = GroupChat.objects.create(room_name=group_name)
+        try:
+            instance.users.add(user)
+        except Exception as e:
+            raise e
+        return redirect("/")
+
+
+class GroupChatUpdate(LoginRequiredMixin, UpdateView):
+    model = GroupChat
+    fields = ['room_name', 'users']
+
+    def get_success_url(self):
+        return reverse_lazy('public-chat', kwargs={'group_id': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Successfully updated the task.')
+        return super().form_valid(form)
+
+
+""" API Implementations """
+
+
+class GroupView(generics.RetrieveAPIView):
+    queryset = GroupChat.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = GroupSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class GroupCreateView(generics.CreateAPIView):
+    serializer_class = GroupCreateSerializer
+
+
+class GroupDetail(views.APIView):
+    """ Retrieve, update or delete group object """
+
+    def get_object(self, pk):
+        try:
+            return GroupChat.objects.get(pk=pk)
+        except GroupChat.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        group = self.get_object(pk)
+        serializer = GroupDetailSerializer(group, data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk, format=None):
+        group = self.get_object(pk)
+        serializer = GroupDetailSerializer(group, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        group = self.get_object(pk)
+        group.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MessageView(generics.RetrieveAPIView):
+    queryset = Message.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = MessageSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class MessageDetail(views.APIView):
+    """ Gukurura, guhindura, no gukoresha messages in our API """
+
+    def get_object(self, pk):
+        try:
+            return Message.objects.get(pk=pk)
+        except Message.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        message = self.get_object(pk)
+        serializer = MessageSerializer(message, data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk, format=None):
+        message = self.get_object(pk)
+        serializer = MessageSerializer(message, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        message = self.get_object(pk)
+        message.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

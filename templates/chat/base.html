@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-light">
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'chat/bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'chat/css/emojionearea.min.css' %}">
     <script src="{% static 'chat/jquery/jquery-3.6.0.js' %}"></script>
+    <script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
     <script src="{% static 'chat/js/emojionearea.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'chat/bootstrap/js/bootstrap.min.js' %}"></script>
 
@@ -20,7 +21,7 @@
     {# Poppins #}
 
 
-    <title>HCD Chat Project</title>
+    <title>Chat Project</title>
     <!-- Custom css -->
     {#    <link rel="stylesheet" type="text/css" href="{% static 'chat/css/main.css' %}">#}
     <link rel="stylesheet" type="text/css" href="{% static 'chat/css/chat.css' %}">
@@ -29,6 +30,20 @@
 <body>
 
 <div class="container">
+{#    <div class="row" style="margin-bottom: 0.2rem">#}
+{#        <div class="col">#}
+            {# row and column to display the messages #}
+{#            {% if messages %}#}
+{#                {% for message in messages %}#}
+{#                    <div class="alert alert-{{ message.tags }}" role="alert">#}
+{##}
+{#                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">#}
+{#                        </button>#}
+{#                    </div>#}
+{#                {% endfor %}#}
+{#            {% endif %}#}
+{#        </div>#}
+{#    </div>#}
     {% block content %}
     {% endblock %}
     <div class="row footer">
@@ -38,7 +53,8 @@
                 <a href="#">Terms of Service</a> |
                 <a href="#">Privacy Policy</a> | <a href="#">Cookie Policy</a>
             </p>
-            <p><b>&copy;2021 Group VII, HCD Class Project <span class="fa fa-code-branch"></span></b></p>
+            <!--<p class="copy-rights"><b>&copy;2021 Group VII, HCD Class Project <span class="fa fa-code-branch"></span></b></p>-->
+            <p class="copy-rights"><b>&copy;2021 Group VII <span class="fa fa-code-branch"></span></b></p>
         </div>
     </div>
 </div>

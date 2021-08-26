@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     'users',
     'chat',
+    'rest_framework',
+    'bootstrap_modal_forms',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

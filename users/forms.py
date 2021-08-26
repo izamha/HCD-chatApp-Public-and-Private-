@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from .models import Profile, CustomUser
 from django.utils.translation import gettext_lazy as _
+from bootstrap_modal_forms.forms import BSModalModelForm, BSModalForm
+from bootstrap_modal_forms.mixins import PopRequestMixin, CreateUpdateAjaxMixin
 
 
 class UserRegisterForm(UserCreationForm):
@@ -16,6 +18,10 @@ class UserRegisterForm(UserCreationForm):
         attrs={'class': 'form-control', 'type': 'password', 'required': 'true', 'data-toggle': 'password'}))
     password2 = forms.CharField(label=_('Confirm Password'), widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'type': 'password', 'required': 'true', 'data-toggle': 'password'}))
+
+    class Meta:
+        model = get_user_model()
+        fields = ('name', 'email', 'password1', 'password2',)
 
 
 class LoginForm(forms.Form):

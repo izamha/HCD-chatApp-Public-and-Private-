@@ -1,4 +1,36 @@
-{% extends 'chat/base.html' %}
+{% extends "chat/base.html" %}
+{% load i18n %}
+{% load crispy_forms_filters %}
+{% load crispy_forms_tags %}
 {% block content %}
-    <h1 style="text-align: center; color: gray;">Profile</h1>
-{% endblock %}
+
+    <div class="container" style="margin-top: 1.5rem;">
+        <div class="row">
+            <div class="col-md d-flex justify-content-center">
+                <div class="content-section" id="form-container">
+                    <div class="media">
+                        <img class="rounded-circle account-img" src="{{ user.profile.imageURL }}" width="60" height="60"
+                             alt="Profile">
+                        <div class="media-body">
+                            <h3 class="account-heading">{{ user.name }}</h3>
+                            <p class="text-secondary user-email">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            <legend class="border-bottom mb-4">{% translate "Profile Info" %}</legend>
+                            {{ u_form|crispy }}
+                            {{ p_form|crispy }}
+                        </fieldset>
+
+                        <div class="form-group">
+                            <button class="btn btn-primary mt-2" type="submit">{% translate "Update" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

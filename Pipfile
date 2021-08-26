@@ -10,6 +10,9 @@ channels = "*"
 channels-redis = "*"
 tortoise-orm = "*"
 django-crispy-forms = "*"
+djangorestframework = "*"
+django-bootstrap-modal-forms = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 

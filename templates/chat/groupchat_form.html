@@ -1,0 +1,29 @@
+{% extends 'chat/base.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+{% load i18n %}
+
+{% block content %}
+    <div class="container" style="margin-top: 4rem;">
+        <div class="row">
+            <div class="col-md d-flex justify-content-center">
+                <div class="col-4" id="form-container">
+                    <div class="content-section">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <fieldset class="form-group">
+                                <legend class="border-bottom mb-4">Update a Group</legend>
+                                {{ form|crispy }}
+                            </fieldset>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update a Group</button>
+                                <small class="text-muted ml-2">Hold down CTRL to select multiple users.</small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

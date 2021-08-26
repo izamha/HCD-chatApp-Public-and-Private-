@@ -7,17 +7,22 @@ from django.utils.translation import gettext_lazy as _
 from .backends import CustomAuthBackend
 from .forms import UserRegisterForm, LoginForm, ProfileUpdateForm, UserUpdateForm
 from .admin import UserCreationForm
+from .models import Profile
+from bootstrap_modal_forms.generic import (BSModalLoginView,
+                                           BSModalFormView,
+                                           BSModalCreateView,
+                                           BSModalUpdateView)
 
 
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = UserRegisterForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, _(f'You have successfully registered to our chatApp!'))
             return redirect('users:login')
     else:
-        form = UserCreationForm()
+        form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
 
 
@@ -34,11 +39,11 @@ def login(request):
             if user.is_active:
                 auth_login(request, user, backend='users.backends.CustomAuthBackend')
                 return redirect(request.GET.get('next') or reverse('chat:home'))
-            else:
-                messages.error(request,
-                               _(f'Please enter the correct email and password. Note that both fields might be case '
-                                 f'sensitive.'))
-                return redirect(reverse('users:login'))
+        else:
+            messages.error(request,
+                           _(f'Please enter the correct email and password. Note that both fields might be case '
+                             f'sensitive.'))
+            return redirect(reverse('users:login'))
     else:
         form = LoginForm()
         context = {'form': form}
@@ -47,6 +52,7 @@ def login(request):
 
 @login_required
 def profile(request):
+    Profile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
         u_form = UserUpdateForm(request.POST, instance=request.user)
         p_form = ProfileUpdateForm(request.POST,
@@ -72,3 +78,17 @@ def logout(request):
     context = {'title': 'Logout'}
     return render(request, 'users/logout.html', context)
 
+
+""" Trial """
+
+
+class LoginView(BSModalLoginView):
+    authentication_form = LoginForm
+    template_name = 'users/login.html'
+    success_message = 'Success: Successfully logged in!'
+
+
+class RegisterView(BSModalCreateView):
+    form_class = UserCreationForm
+    template_name = 'users/register.html'
+    success_message = 'Success: Successfully signed up!'

@@ -1,11 +1,16 @@
 body, html {
     height: 100%;
     margin: 0;
-    background: #b7d57f;
-    background: -webkit-linear-gradient(to right, #91EAE4, #98ad6f, #5aa156);
-    background: linear-gradient(to right, #91EAE4, #98ad6f, #5aa156);
+    background: var(--color-background);
     font-family: 'Poppins', sans-serif;
-    overflow-y: hidden;
+    overflow-y: auto;
+}
+
+/* Forms login|signup */
+.content-section {
+    border: 1px solid #afabab;
+    padding: 30px;
+    border-radius: 9px;
 }
 
 /* home.html */
@@ -223,7 +228,7 @@ li:before {
 }
 
 .contacts_body li:hover {
-    background-color: #49ac58;
+    background-color: var(--color-hover);
     cursor: pointer;
 }
 
@@ -364,7 +369,7 @@ input:focus {
 }
 
 .search_btn .fa-search:hover {
-    color: #4cd137;
+    color: var(--color-secondary);
     cursor: pointer;
 }
 
@@ -382,13 +387,13 @@ input:focus {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background: #55b159;
+    background: var(--color-secondary);;
     border-radius: 10px;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #2f7621;
+    background: var(--color-secondary);;
 }
 
 
@@ -455,7 +460,14 @@ input:focus {
 }
 
 .offline {
+    position: absolute;
+    height: 15px;
+    width: 15px;
     background-color: #c23616 !important;
+    border-radius: 50%;
+    bottom: 0.2em;
+    right: 0.4em;
+    border: 1.5px solid white;
 }
 
 .user-info {
@@ -493,9 +505,29 @@ input:focus {
     margin-bottom: auto;
     margin-left: 10px;
     border-radius: 2px 25px 2px;
+    background-color: var(--color-message-received);
+    padding: 10px;
+    position: relative;
+}
+
+.msg-container-group {
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: 10px;
+    border-radius: 2px 25px 2px;
     background-color: #7fe9d7;
     padding-left: 8px;
     padding-right: 8px;
+    position: relative;
+}
+
+.msg-container-send-group {
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-right: 10px;
+    border-radius: 0 25px 0;
+    background-color: #47b056;
+    padding: 8px;
     position: relative;
 }
 
@@ -504,7 +536,7 @@ input:focus {
     margin-bottom: auto;
     margin-right: 10px;
     border-radius: 0 25px 0;
-    background-color: #47b056;
+    background-color: var(--color-message-sent);
     padding: 8px;
     position: relative;
 }
@@ -542,12 +574,17 @@ input:focus {
     z-index: 1;
     position: absolute;
     padding: 15px 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.87);
     color: white;
     border-radius: 15px;
     top: 30px;
     right: 15px;
     display: none;
+}
+
+.action_menu a {
+    text-decoration: none;
+    color: white;
 }
 
 .action_menu ul {
@@ -570,7 +607,7 @@ input:focus {
 
 .action_menu ul li:hover {
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 192, 81, 0.5);
 }
 
 @media (max-width: 576px) {
@@ -606,16 +643,20 @@ input:focus {
 }
 
 .separator-line {
-    background-color: whitesmoke;
+    background-color: var(--color-secondary);
     width: 100%;
 }
 
 .footer-links a {
-    color: #ffffff;
+    color: var(--color-secondary);
 }
 
 .footer-links a:hover {
     color: #384e61;
+}
+
+.copy-rights {
+    color: var(--color-secondary);
 }
 
 .show-settings {
@@ -655,19 +696,59 @@ input:focus {
 }
 
 .video-cam .fa-video:hover {
-    color: #47b056;
+    color: var(--color-secondary);
 }
 
 .video-cam .fa-phone:hover {
-    color: #47b056;
+    color: var(--color-secondary);
 }
 
 .fa-ellipsis-v:hover {
-    color: #47b056;
+    color: var(--color-secondary);
+}
+
+.fa-cloud-sun {
+    color: var(--color-secondary);
 }
 
 .fa-cloud-sun:hover {
-    color: #47b056;
+    color: var(--color-sun-hover);
+}
+
+/* Light and Dark and More Mode */
+.theme-light {
+    --color-primary: #e3e3e3;
+    --color-secondary: #999999;
+    --color-accent: #fd6f53;
+    --font-color: #000000;
+    --color-hover: #e3e3e3;
+    --color-message-received: #65b9aa;
+    --color-message-sent: #52ac7a;
+    --color-background: #e3e3e3;
+    --color-sun-hover: #c6c1c1;
+}
+
+.theme-dark {
+    --color-primary: #00b117;
+    --color-secondary: #243133;
+    --color-accent: #12cdea;
+    --font-color: #ffffff;
+    --color-hover: #00b117;
+    --color-message-received: #7fe9d7;
+    --color-message-sent: #47b056;
+    --color-background: #b7d57f;
+    --color-sun-hover: #bbbdb1;
+}
+
+.theme-more {
+    --color-primary: #00b117;
+    --color-secondary: #243133;
+    --color-accent: #12cdea;
+    --font-color: #ffffff;
+    --color-hover: #00b117;
+    --color-message-received: #7fe9d7;
+    --color-message-sent: #47b056;
+    --color-background: #212120;
 }
 
 .fa-users {

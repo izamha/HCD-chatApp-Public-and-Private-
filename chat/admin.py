@@ -2,15 +2,16 @@ from django.contrib import admin
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from .models import Thread, Message, GroupChat, GroupChatMessage
+from .forms import GroupChatForm
 
 admin.site.register(Thread)
 admin.site.register(Message)
 
 
 class GroupChatAdmin(admin.ModelAdmin):
-    list_display = ['id', 'group_name']
+    list_display = ['group_name']
     search_fields = ['id', 'group_name']
-    list_display_links = ['id']
+    list_display_links = ['group_name']
 
     class Meta:
         model = GroupChat

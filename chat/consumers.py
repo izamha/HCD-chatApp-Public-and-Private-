@@ -103,7 +103,8 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
                     'message': message,
                 }
             )
-            await self.save_message(text=message)
+            # The group messages
+            # await self.save_message(text=message)
         except json.decoder.JSONDecodeError as err:
             print(err)
 

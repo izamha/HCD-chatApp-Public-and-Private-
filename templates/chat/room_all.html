@@ -58,10 +58,10 @@
                         </div>
                         <!-- End of Modal -->
 
-                        {#                        <span class="fas fa-users"#}
-                        {#                                          data-placement="top" title="Add a group"#}
-                        {#                                          data-bs-toggle="modal"#}
-                        {#                                          data-bs-target="#groupModal"></span>#}
+                        {#  <span class="fas fa-users"#}
+                        {#   data-placement="top" title="Add a group"#}
+                        {#   data-bs-toggle="modal"#}
+                        {#   data-bs-target="#groupModal"></span>#}
                         <a href="{% url 'public-chat-create' %}" class="fa fa-users"></a>
                         <a href="{% url 'users:register' %}" class="fa fa-user-plus"></a>
                     </div>
@@ -78,7 +78,17 @@
                                             <img src="{{ user.profile.imageURL }}"
                                                  class="rounded-circle user_img"
                                                  alt="Profile Image">
-                                            <span class="online-icon"></span>
+
+                                            <!-- unnecessary -->
+
+                                            {# {% for active_user in active_users %}#}
+                                            {#   {% if active_user == user.email %}#}
+                                            {#    <span class="online-icon"></span>#}
+                                            {# {% else %}#}
+                                            {#  <span class="offline"></span>#}
+                                            {# {% endif %}#}
+                                            {# {% endfor %}#}
+
                                         </div>
                                         <div class="user-info left-side-bar">
                                             <span>{{ user.name|truncatechars:11 }}</span>
@@ -101,10 +111,9 @@
                                 onclick="redirect('{{ group.get_absolute_url }}')">
                                 <div class="d-flex bd-highlight">
                                     <div class="img_cont">
-                                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                        <img src="{{ group.group_icon.url }}"
                                              class="rounded-circle user_img"
                                              alt="Profile Image">
-                                        <span class="online-icon"></span>
                                     </div>
                                     <div class="user-info">
                                         <span>{{ group.room_name|truncatechars:11 }}</span>
@@ -139,30 +148,40 @@
                                 <img src="{{ current_user.profile.imageURL }}"
                                      class="rounded-circle user_img"
                                      alt="Profile Image">
-                                <span class="online-icon"></span>
-                            {% else %}
-                                <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                {% for u in active_user %}
+                                    {% if u.user.email == current_user.email %}
+                                        <span class="online-icon"></span>
+                                    {% else %}
+                                        <span class="offline"></span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif chat_group %}
+                                <img src="{{ chat_group.group_icon.url }}"
                                      class="rounded-circle user_img"
                                      alt="Profile Image">
-                                <span class="online-icon"></span>
+                            {% else %}
+                                <!-- <h4>Nothing to show here</h4> -->
                             {% endif %}
                         </div>
                         <div class="user-info">
                             <span><b>{{ chat_group|truncatechars:40 }}{{ current_user.name|truncatechars:40 }}</b></span>
                             <p>{{ members }}</p>
                         </div>
-{#                        <div class="video-cam">#}
-{#                            <span><i class="fa fa-cloud-sun" data-toggle="tooltip" data-placement="top"#}
-{#                                     title="Day and Night"></i></span>#}
-{#                        </div>#}
+                        <div class="video-cam">
+                         <span><i class="fa fa-cloud-sun" data-toggle="tooltip" data-placement="top"
+                                  title="Day or Night" onclick="toggleTheme()"></i></span>
+                        </div>
                     </div>
                     <span id="action_menu_btn"><i class="fa fa-ellipsis-v" data-toggle="tooltip" data-placement="top"
                                                   title="More..."></i></span>
                     <div class="action_menu">
                         <ul>
-                            <li><i class="fa fa-user-circle"></i>View profile</li>
-                            <li><i class="fa fa-users"></i> Add to Close Friends</li>
-                            <li><i class="fa fa-plus"></i> Add to group</li>
+                            <li><i class="fa fa-user-circle"></i><a href="{% url 'users:profile' %}">View Profile</a>
+                            </li>
+                            {% if chat_group %}
+                                <li><i class="fa fa-plus"></i><a href="{% url 'add-user' chat_group.id %}">Add a
+                                    User</a></li>
+                            {% endif %}
                             <li><i class="fa fa-ban"></i> Block</li>
                             <hr>
                             <li><i class="fa fa-sign-out-alt"></i><a href="{% url 'users:logout' %}">Logout</a></li>
@@ -170,6 +189,8 @@
                     </div>
                 </div>
                 <div class="card-body msg-card-body">
+
+                    <!-- For the private chat -->
                     {% for message in messages %}
                         {% if message.sender.name == me %}
                             <div class="d-flex justify-content-end mb-4">
@@ -178,14 +199,14 @@
                                     <span class="msg-time-sent">{{ message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
                                 </div>
                                 <div class="img_cont_msg">
-                                    <img src="{% static 'chat/images/ubuntu.jpg' %}" class="rounded-circle user_img_msg"
+                                    <img src="{{ message.sender.profile.imageURL }}" class="rounded-circle user_img_msg"
                                          alt="Profile Image">
                                 </div>
                             </div>
                         {% else %}
                             <div class="d-flex justify-content-start mb-4">
                                 <div class="img_cont_msg">
-                                    <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                    <img src="{{ message.sender.profile.imageURL }}"
                                          class="rounded-circle user_img_msg"
                                          alt="Profile Image">
                                 </div>
@@ -201,23 +222,24 @@
                     {% for group_message in group_messages %}
                         {% if group_message.user.name == request.user.name %}
                             <div class="d-flex justify-content-end mb-4">
-                                <div class="msg-container-send">
+                                <div class="msg-container-send-group">
                                     {{ group_message.text }}
                                     <span class="msg-time-sent">{{ group_message.created_at|timezone:'Africa/Harare'|date:'P' }}</span>
                                 </div>
                                 <div class="img_cont_msg">
-                                    <img src="{{ group_message.user.profile.imageURL }}" class="rounded-circle user_img_msg"
+                                    <img src="{{ group_message.user.profile.imageURL }}"
+                                         class="rounded-circle user_img_msg"
                                          alt="Profile Image">
                                 </div>
                             </div>
                         {% else %}
                             <div class="d-flex justify-content-start mb-4">
                                 <div class="img_cont_msg">
-                                    <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                                    <img src="{{ group_message.user.profile.imageURL }}"
                                          class="rounded-circle user_img_msg"
                                          alt="Profile Image">
                                 </div>
-                                <div class="msg-container">
+                                <div class="msg-container-group">
                                     <small class="text-muted"
                                            style="font-size: 11px;">{{ group_message.user.name }}</small>
                                     <p class="small">{{ group_message.text }}</p>
@@ -247,6 +269,7 @@
 {% endblock content %}
 {% block custom_js %}
     <script>
+
         const roomId = "{{ chat_group.id }}"
         const user = "{{ request.user.name }}"
 
@@ -358,6 +381,32 @@
                 useInternalCDN: true
             });
         })
+
+        // function to set a given theme/color-scheme
+        function setTheme(themeName) {
+            localStorage.setItem('theme', themeName);
+            document.documentElement.className = themeName;
+        }
+
+        // function to toggle between light and dark mode
+        function toggleTheme() {
+            if (localStorage.getItem('theme') === 'theme-dark') {
+                setTheme('theme-light');
+            } else if (localStorage.getItem('theme') === 'theme-more') {
+                setTheme('theme-more');
+            } else {
+                setTheme('theme-dark');
+            }
+        }
+
+        // Invoke on start
+        (function () {
+            if (localStorage.getItem('theme') === 'theme-dark') {
+                setTheme('theme-dark');
+            } else {
+                setTheme('theme-light');
+            }
+        })();
 
     </script>
 {% endblock %}

@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
-from users.models import CustomUser, Profile
+from users.models import CustomUser, Profile, ActiveUser
 from django.utils.translation import gettext_lazy as _
 
 
@@ -74,6 +74,7 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(get_user_model(), CustomUserAdmin)
 admin.site.register(Profile)
+admin.site.register(ActiveUser)
 
 # Remove Group Model
 admin.site.unregister(Group)

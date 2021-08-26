@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.auth import user_logged_in, user_logged_out
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -95,3 +96,37 @@ class Profile(models.Model):
             output_size = (300, 300)
             img.thumbnail(output_size)
             img.save(self.image.path)
+
+
+class ActiveUser(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
+
+    def __unicode__(self):
+        return f'{self.user.name}'
+
+    def logged_in_user(sender, user, **kwargs):
+        ActiveUser.objects.create(user=user).save()
+
+    def logged_out_user(sender, user, **kwargs):
+        try:
+            ActiveUser.objects.filter(user=user).delete()
+        except ActiveUser.DoesNotExist as err:
+            print(err)
+
+    def current_active_users(self, public_id):
+        try:
+            active_user = ActiveUser.objects.all().filter(user__public_id=public_id)[:1]
+            return active_user
+        except ActiveUser.DoesNotExist as err:
+            print(err)
+
+    def current_active_users2(self):
+        users = CustomUser.objects.all()
+        online_people = []
+        active_users = ActiveUser.objects.all()
+        for active_user in active_users:
+            online_people.append(active_user.user.email)
+        return online_people
+
+    user_logged_in.connect(logged_in_user)
+    user_logged_out.connect(logged_out_user)

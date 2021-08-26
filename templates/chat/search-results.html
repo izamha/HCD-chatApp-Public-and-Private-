@@ -11,7 +11,6 @@
                             <img src="{{ contact.profile.imageURL }}"
                                  class="rounded-circle user_img"
                                  alt="Profile Image">
-                            <span class="online-icon"></span>
                         </div>
                         <div class="user-info left-side-bar">
                             <span>{{ contact.name|truncatechars:11 }}</span>
@@ -35,10 +34,9 @@
                 onclick="redirect('{{ group.get_absolute_url }}')">
                 <div class="d-flex bd-highlight">
                     <div class="img_cont">
-                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                        <img src="{{ group.group_icon.url }}"
                              class="rounded-circle user_img"
                              alt="Profile Image">
-                        <span class="online-icon"></span>
                     </div>
                     <div class="user-info">
                         <span>{{ group.room_name|truncatechars:11 }}</span>
@@ -57,10 +55,9 @@
                 onclick="redirect('{{ group.get_absolute_url }}')">
                 <div class="d-flex bd-highlight">
                     <div class="img_cont">
-                        <img src="{% static 'chat/images/masked_cat.jpeg' %}"
+                        <img src="{{ group.group_icon.url }}"
                              class="rounded-circle user_img"
                              alt="Profile Image">
-                        <span class="online-icon"></span>
                     </div>
                     <div class="user-info">
                         <span>{{ group.room_name|truncatechars:11 }}</span>
