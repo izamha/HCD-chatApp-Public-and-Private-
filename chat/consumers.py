@@ -35,7 +35,7 @@ class ChatConsumer(AsyncConsumer):
         })
 
         # Store the messages here
-        # await self.save_message(event.get('text'))
+        await self.save_message(event.get('text'))
 
         await self.channel_layer.group_send(
             self.room_name, {

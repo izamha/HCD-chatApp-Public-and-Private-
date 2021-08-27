@@ -18,8 +18,11 @@ from .models import Message, CustomUser, Thread, GroupChat, GroupChatMessage
 from .serializers import (GroupSerializer,
                           GroupCreateSerializer,
                           GroupDetailSerializer,
-                          MessageSerializer, )
-from rest_framework import status
+                          MessageSerializer,
+                          UserSerializer,
+                          MessageCreateSerializer,
+                          UserCreateSerializer, )
+from rest_framework import status, permissions
 
 
 @login_required
@@ -239,6 +242,10 @@ class GroupCreateView(generics.CreateAPIView):
     serializer_class = GroupCreateSerializer
 
 
+class MessageCreateView(generics.CreateAPIView):
+    serializer_class = MessageCreateSerializer
+
+
 class GroupDetail(views.APIView):
     """ Retrieve, update or delete group object """
 
@@ -306,3 +313,48 @@ class MessageDetail(views.APIView):
         message = self.get_object(pk)
         message.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserDetail(views.APIView):
+    """ Gukurura, guhindura, no gukoresha users in our API """
+
+    def get_object(self, pk):
+        try:
+            return CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk):
+        user = self.get_object(pk)
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        user = self.get_object(pk)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserCreateView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserCreateSerializer
+    permission_classes = (permissions.AllowAny,)
+
+
+class AllUsers(generics.RetrieveAPIView):
+    queryset = CustomUser.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
